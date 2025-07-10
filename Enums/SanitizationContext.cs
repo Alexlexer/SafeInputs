@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SafeInputs.Contexts
+namespace SafeInputs.Enums
 {
     public enum SanitizationContext
     {

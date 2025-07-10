@@ -1,5 +1,5 @@
 ﻿using HtmlAgilityPack;
-using SafeInputs.Contexts;
+using SafeInputs.Enums;
 using SafeInputs.Policies;
 using System;
 using System.Collections.Generic;

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SafeInputs.Enums;
+using SafeInputs.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,9 +8,11 @@ using System.Threading.Tasks;
 
 namespace SafeInputs.Contexts
 {
-    public static class AttributeSanitizer
+    public class AttributeSanitizer : ISanitizer, IContextSanitizer
     {
-        public static string Sanitize(string? input)
+        public SanitizationContext Context => SanitizationContext.Attribute;
+
+        public string Sanitize(string input)
         {
             if (input == null) return string.Empty;
 
@@ -29,5 +33,8 @@ namespace SafeInputs.Contexts
 
             return builder.ToString();
         }
+
+        string IContextSanitizer.Sanitize(string input, object? options)
+            => Sanitize(input);
     }
 }

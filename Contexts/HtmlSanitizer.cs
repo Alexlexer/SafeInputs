@@ -1,21 +1,25 @@
 ﻿using HtmlAgilityPack;
+using SafeInputs.Enums;
+using SafeInputs.Interfaces;
 using SafeInputs.Policies;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SafeInputs.Contexts
 {
-    public static class HtmlSanitizer
+    public class HtmlSanitizer : ISanitizer, ISanitizer<HtmlSanitizerPolicy>, IContextSanitizer
     {
-        public static string Sanitize(string html, HtmlSanitizerPolicy? policy = null)
+        public SanitizationContext Context => SanitizationContext.Html;
+
+        public string Sanitize(string input)
         {
-            if (string.IsNullOrEmpty(html)) return string.Empty;
+            return Sanitize(input, HtmlSanitizerPolicy.Default());
+        }
+
+        public string Sanitize(string input, HtmlSanitizerPolicy? policy)
+        {
+            if (string.IsNullOrEmpty(input)) return string.Empty;
 
             var doc = new HtmlDocument();
-            doc.LoadHtml(html);
+            doc.LoadHtml(input);
 
             policy ??= HtmlSanitizerPolicy.Default();
 
@@ -24,7 +28,14 @@ namespace SafeInputs.Contexts
             return doc.DocumentNode.InnerHtml;
         }
 
-        private static void CleanNodes(HtmlNode node, HtmlSanitizerPolicy policy)
+        // Explicit interface implementation for ISanitizer<HtmlSanitizerPolicy>
+        string ISanitizer<HtmlSanitizerPolicy>.Sanitize(string input, HtmlSanitizerPolicy options)
+            => Sanitize(input, options);
+
+        string IContextSanitizer.Sanitize(string input, object? options)
+            => Sanitize(input, options as HtmlSanitizerPolicy);
+
+        private void CleanNodes(HtmlNode node, HtmlSanitizerPolicy policy)
         {
             foreach (var child in node.ChildNodes.ToList())
             {

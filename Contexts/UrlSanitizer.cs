@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿using SafeInputs.Interfaces;
+using SafeInputs.Enums;
 namespace SafeInputs.Contexts
 {
-    public static class UrlSanitizer
+    public class UrlSanitizer : ISanitizer, IContextSanitizer
     {
-        public static string Sanitize(string? input)
+        public SanitizationContext Context => SanitizationContext.Url;
+        public string Sanitize(string? input)
         {
             if (string.IsNullOrEmpty(input)) return string.Empty;
 
@@ -21,5 +18,8 @@ namespace SafeInputs.Contexts
                 return string.Empty; // fallback
             }
         }
+
+        string IContextSanitizer.Sanitize(string input, object? options)
+            => Sanitize(input);
     }
 }
