@@ -6,7 +6,24 @@ using System.Threading.Tasks;
 
 namespace SafeInputs.Contexts
 {
-    internal class PlainTextSanitizer
+    public static class PlainTextSanitizer
     {
+        public static string Sanitize(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return string.Empty;
+
+            var sanitized = new StringBuilder();
+            foreach (char c in input)
+            {
+                // Remove control characters except line breaks
+                if (!char.IsControl(c) || c == '\n' || c == '\r')
+                {
+                    sanitized.Append(c);
+                }
+            }
+
+            return sanitized.ToString().Trim();
+        }
     }
 }
