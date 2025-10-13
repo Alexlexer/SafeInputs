@@ -66,10 +66,6 @@ The library includes comprehensive unit tests using [xUnit](https://xunit.net/).
 dotnet test
 ```
 
-## Contributing
-
-Contributions are welcome! Please submit pull requests or issues on the [GitHub repository](https://github.com/yourusername/SafeInputs).
-
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
