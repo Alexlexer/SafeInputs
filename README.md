@@ -69,4 +69,4 @@ dotnet test
 ## License
 
 This project is licensed under the **GNU General Public License (GPL)**.  
-See the [LICENSE](./LICENSE) file for details.
+See the [LICENSE] file for details.
