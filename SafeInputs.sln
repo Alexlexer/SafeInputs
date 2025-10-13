@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36301.6 d17.14
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11109.219 d18.0-oob
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeInputs", "SafeInputs.csproj", "{4D8F58EA-6089-4012-A02D-C69250624290}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestsSafeInputs", "..\UnitTestsSafeUnputs\UnitTestsSafeInputs.csproj", "{8D58917E-B41C-437E-8A71-1678C7B7D6EC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +15,6 @@ Global
 		{4D8F58EA-6089-4012-A02D-C69250624290}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D8F58EA-6089-4012-A02D-C69250624290}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D8F58EA-6089-4012-A02D-C69250624290}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8D58917E-B41C-437E-8A71-1678C7B7D6EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8D58917E-B41C-437E-8A71-1678C7B7D6EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8D58917E-B41C-437E-8A71-1678C7B7D6EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8D58917E-B41C-437E-8A71-1678C7B7D6EC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
