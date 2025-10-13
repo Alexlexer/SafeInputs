@@ -5,6 +5,8 @@ VisualStudioVersion = 18.0.11109.219 d18.0-oob
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeInputs", "SafeInputs.csproj", "{4D8F58EA-6089-4012-A02D-C69250624290}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeInputsTests", "..\SafeInputsTests\SafeInputsTests.csproj", "{8C6032FC-20E0-4897-B60F-F0753D354C50}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{4D8F58EA-6089-4012-A02D-C69250624290}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D8F58EA-6089-4012-A02D-C69250624290}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D8F58EA-6089-4012-A02D-C69250624290}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C6032FC-20E0-4897-B60F-F0753D354C50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C6032FC-20E0-4897-B60F-F0753D354C50}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C6032FC-20E0-4897-B60F-F0753D354C50}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C6032FC-20E0-4897-B60F-F0753D354C50}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
