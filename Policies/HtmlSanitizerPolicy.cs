@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace SafeInputs.Policies
 {
@@ -9,7 +10,7 @@ namespace SafeInputs.Policies
         /// </summary>
         public HashSet<string> AllowedTags { get; set; } = new()
         {
-            "b", "i", "u", "p", "strong", "em", "ul", "ol", "li", "br", "span", "div", "a"
+            "b", "i", "u", "p", "strong", "em", "ul", "ol", "li", "br", "span", "div", "a", "img"
         };
 
         /// <summary>
@@ -22,28 +23,69 @@ namespace SafeInputs.Policies
 
         /// <summary>
         /// Global allowed attributes for any tag.
+        /// NOTE: do NOT include "style" or JS event handlers here for safety.
         /// </summary>
         public HashSet<string> GlobalAllowedAttributes { get; set; } = new()
         {
-            "class", "style", "id", "title", "href", "src", "alt", "target"
+            "class", "id", "title", "href", "src", "alt", "target"
+        };
+
+        /// <summary>
+        /// Global blocked attributes for any tag (JS handlers, dangerous attrs).
+        /// These are always blocked regardless of AllowedAttributes entries.
+        /// </summary>
+        public HashSet<string> GlobalBlockedAttributes { get; set; } = new()
+        {
+            "onerror", "onclick", "onload", "onmouseover", "onfocus", "onblur", "style"
         };
 
         /// <summary>
         /// Per-tag attribute allowlist.
+        /// Keys and values are expected in lower-case.
         /// </summary>
         public Dictionary<string, HashSet<string>> AllowedAttributes { get; set; } = new();
 
         /// <summary>
+        /// Per-tag attribute blocklist (optional, overrides allowed lists).
+        /// </summary>
+        public Dictionary<string, HashSet<string>> BlockedAttributes { get; set; } = new();
+
+        /// <summary>
         /// Checks whether an attribute is allowed on a tag.
+        /// First checks explicit blocklist, then per-tag allowlist, then global allowlist.
         /// </summary>
         public bool IsAttributeAllowed(string tag, string attr)
         {
-            if (AllowedAttributes.TryGetValue(tag, out var allowedForTag))
-            {
-                return allowedForTag.Contains(attr);
-            }
+            if (string.IsNullOrEmpty(tag) || string.IsNullOrEmpty(attr)) return false;
 
+            tag = tag.ToLowerInvariant();
+            attr = attr.ToLowerInvariant();
+
+            // If explicitly blocked (global or per-tag) => not allowed
+            if (IsAttributeBlocked(tag, attr)) return false;
+
+            // If per-tag allowlist exists => require it
+            if (AllowedAttributes.TryGetValue(tag, out var allowedForTag))
+                return allowedForTag.Contains(attr);
+
+            // Otherwise, fall back to global allowlist
             return GlobalAllowedAttributes.Contains(attr);
+        }
+
+        /// <summary>
+        /// Checks whether attribute is explicitly blocked (per-tag or global).
+        /// </summary>
+        public bool IsAttributeBlocked(string tag, string attr)
+        {
+            if (string.IsNullOrEmpty(tag) || string.IsNullOrEmpty(attr)) return false;
+
+            tag = tag.ToLowerInvariant();
+            attr = attr.ToLowerInvariant();
+
+            if (BlockedAttributes.TryGetValue(tag, out var blockedForTag))
+                if (blockedForTag.Contains(attr)) return true;
+
+            return GlobalBlockedAttributes.Contains(attr);
         }
 
         /// <summary>
@@ -53,10 +95,10 @@ namespace SafeInputs.Policies
         {
             var policy = new HtmlSanitizerPolicy();
 
-            // Example: restrict <a> tag to href/target only
+            // Restrict <a> tag to href/target/rel only
             policy.AllowedAttributes["a"] = new HashSet<string> { "href", "target", "rel" };
 
-            // Example: restrict <img> tag
+            // Restrict <img> tag
             policy.AllowedAttributes["img"] = new HashSet<string> { "src", "alt", "width", "height" };
 
             return policy;
@@ -72,7 +114,12 @@ namespace SafeInputs.Policies
                 AllowedTags = new HashSet<string>(AllowedTags),
                 BlockedTags = new HashSet<string>(BlockedTags),
                 GlobalAllowedAttributes = new HashSet<string>(GlobalAllowedAttributes),
+                GlobalBlockedAttributes = new HashSet<string>(GlobalBlockedAttributes),
                 AllowedAttributes = AllowedAttributes.ToDictionary(
+                    entry => entry.Key,
+                    entry => new HashSet<string>(entry.Value)
+                ),
+                BlockedAttributes = BlockedAttributes.ToDictionary(
                     entry => entry.Key,
                     entry => new HashSet<string>(entry.Value)
                 )

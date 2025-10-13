@@ -1,22 +1,20 @@
-﻿using HtmlAgilityPack;
-using SafeInputs.Enums;
+﻿using SafeInputs.Enums;
 using SafeInputs.Policies;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SafeInputs.Extensions
 {
     public class FluentSanitizer
     {
-        private string _input;
+        private readonly string _input;
         private SanitizationContext _context;
         private HtmlSanitizerPolicy? _htmlPolicy;
 
+        private FluentSanitizer(string input)
+        {
+            _input = input;
+        }
         public static FluentSanitizer Sanitize(string input)
-            => new() { _input = input };
+        => new FluentSanitizer(input);
 
         public FluentSanitizer ForHtml(HtmlSanitizerPolicy? policy = null)
         {
