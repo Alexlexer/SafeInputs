@@ -11,7 +11,7 @@ namespace SafeInputs.Contexts
     {
         public SanitizationContext Context => SanitizationContext.Html;
 
-        // Optional regexes for speed / pre-cleaning (kept compiled)
+        // Precompiled regexes for performance
         private static readonly Regex CommentRegex = new Regex(@"<!--.*?-->", RegexOptions.Singleline | RegexOptions.Compiled);
         private static readonly Regex DangerousTagsRegex = new Regex(
             @"<(script|iframe|style|object|embed|form)\b[^>]*>.*?</\1\s*>",
@@ -24,111 +24,117 @@ namespace SafeInputs.Contexts
             if (string.IsNullOrEmpty(input)) return string.Empty;
             policy ??= HtmlSanitizerPolicy.Default();
 
-            // 1) Remove comments (safe to do first)
+            // 1) Remove comments quickly
             input = CommentRegex.Replace(input, string.Empty);
 
-            // 2) Remove known dangerous containers with their content
+            // 2) Remove dangerous container tags + content (script, iframe, style, ...)
             input = DangerousTagsRegex.Replace(input, string.Empty);
 
+            // 3) Linear parse: keep allowed tags and filter attributes (whitelist-only)
             var sb = new StringBuilder(input.Length);
-            int pos = 0;
-            int len = input.Length;
+            int pos = 0, len = input.Length;
 
             while (pos < len)
             {
-                if (input[pos] == '<')
+                char c = input[pos];
+                if (c != '<')
                 {
-                    int endTag = input.IndexOf('>', pos);
-                    if (endTag == -1)
+                    sb.Append(c);
+                    pos++;
+                    continue;
+                }
+
+                // c == '<'
+                int endTag = input.IndexOf('>', pos);
+                if (endTag == -1)
+                {
+                    // malformed tag: append '<' as text and continue
+                    sb.Append('<');
+                    pos++;
+                    continue;
+                }
+
+                // inner content between '<' and '>'
+                int innerStart = pos + 1;
+                int innerLen = endTag - innerStart;
+                if (innerLen <= 0)
+                {
+                    // cases like "<>"
+                    pos = endTag + 1;
+                    continue;
+                }
+
+                string tagContent = input.Substring(innerStart, innerLen).Trim();
+                if (string.IsNullOrEmpty(tagContent))
+                {
+                    pos = endTag + 1;
+                    continue;
+                }
+
+                bool isEndTag = tagContent.StartsWith("/");
+                string rawNameAndAttrs = isEndTag ? (tagContent.Length > 1 ? tagContent.Substring(1).TrimStart() : string.Empty) : tagContent;
+                if (string.IsNullOrEmpty(rawNameAndAttrs))
+                {
+                    pos = endTag + 1;
+                    continue;
+                }
+
+                // find tag name up to whitespace (safe without Split[0])
+                int wsIndex = rawNameAndAttrs.IndexOfAny(new[] { ' ', '\t', '\r', '\n' });
+                string tagName = wsIndex >= 0 ? rawNameAndAttrs.Substring(0, wsIndex) : rawNameAndAttrs;
+                if (string.IsNullOrEmpty(tagName))
+                {
+                    pos = endTag + 1;
+                    continue;
+                }
+                tagName = tagName.ToLowerInvariant();
+
+                // Only allow tags explicitly in policy
+                if (policy.AllowedTags.Contains(tagName))
+                {
+                    sb.Append('<');
+                    if (isEndTag) sb.Append('/');
+                    sb.Append(tagName);
+
+                    // attributes only for opening tags
+                    if (!isEndTag && wsIndex >= 0 && wsIndex + 1 < rawNameAndAttrs.Length)
                     {
-                        // malformed tag — append char and advance
-                        sb.Append(input[pos]);
-                        pos++;
-                        continue;
-                    }
-
-                    // extract inner of < ... >
-                    int innerStart = pos + 1;
-                    int innerLen = endTag - innerStart;
-                    if (innerLen <= 0)
-                    {
-                        // e.g. "<>" or similar — skip tag markers
-                        pos = endTag + 1;
-                        continue;
-                    }
-
-                    string tagContent = input.Substring(innerStart, innerLen).Trim();
-                    if (string.IsNullOrEmpty(tagContent))
-                    {
-                        pos = endTag + 1;
-                        continue;
-                    }
-
-                    bool isEndTag = tagContent.StartsWith("/");
-                    string rawTagName = isEndTag ? (tagContent.Length > 1 ? tagContent.Substring(1).TrimStart() : string.Empty) : tagContent;
-                    if (string.IsNullOrEmpty(rawTagName))
-                    {
-                        pos = endTag + 1;
-                        continue;
-                    }
-
-                    // find tag name up to first whitespace (if any)
-                    string tagName;
-                    int firstSpace = rawTagName.IndexOfAny(new char[] { ' ', '\t', '\r', '\n' });
-                    if (firstSpace >= 0)
-                        tagName = rawTagName.Substring(0, firstSpace);
-                    else
-                        tagName = rawTagName;
-
-                    tagName = tagName.ToLowerInvariant();
-
-                    // ONLY allow tags from allowlist
-                    if (policy.AllowedTags.Contains(tagName))
-                    {
-                        // reconstruct tag
-                        sb.Append('<');
-                        if (isEndTag) sb.Append('/');
-                        sb.Append(tagName);
-
-                        // attributes only for opening tags
-                        if (!isEndTag)
+                        string attrsPart = rawNameAndAttrs.Substring(wsIndex + 1).Trim();
+                        if (!string.IsNullOrEmpty(attrsPart))
                         {
-                            string attrsPart = string.Empty;
-                            if (firstSpace >= 0 && firstSpace + 1 < rawTagName.Length)
-                                attrsPart = rawTagName.Substring(firstSpace + 1).Trim();
-
-                            if (!string.IsNullOrEmpty(attrsPart))
+                            string filtered = FilterAttributesSpan(attrsPart, tagName, policy);
+                            if (!string.IsNullOrEmpty(filtered))
                             {
-                                string filtered = FilterAttributesSpan(attrsPart, tagName, policy);
-                                if (!string.IsNullOrEmpty(filtered))
-                                {
-                                    sb.Append(' ').Append(filtered);
-                                }
+                                sb.Append(' ').Append(filtered);
                             }
                         }
-
-                        sb.Append('>');
                     }
-                    // else: tag not allowed => drop the tag markers (but keep whatever text outside tags)
-                    pos = endTag + 1;
+
+                    // self-closing detection: if original tag had trailing '/' before '>', keep it
+                    bool selfClosing = (rawNameAndAttrs.EndsWith("/") || (endTag - 1 >= 0 && input[endTag - 1] == '/'));
+                    if (selfClosing && !isEndTag)
+                    {
+                        // normalize to "<tag ... />"
+                        if (sb[sb.Length - 1] != '/') sb.Append(" /");
+                    }
+
+                    sb.Append('>');
                 }
-                else
-                {
-                    sb.Append(input[pos]);
-                    pos++;
-                }
+                // else: tag not in allowlist => drop tag markers, keep content outside tags
+
+                pos = endTag + 1;
             }
 
             return sb.ToString();
         }
 
-        // Robust span-based attribute parser — returns "name='value' name2='v2'" or empty
+        // Robust attribute parser using Span to avoid Regex over-attribution and support quoted values with spaces.
+        // Returns attributes formatted like: name='value' name2='v2'  (single-quoted normalized)
         private string FilterAttributesSpan(string attrText, string tagName, HtmlSanitizerPolicy policy)
         {
             var sb = new StringBuilder(attrText.Length);
             ReadOnlySpan<char> span = attrText.AsSpan();
-            int i = 0;
-            int n = span.Length;
+            int i = 0, n = span.Length;
 
             while (i < n)
             {
@@ -136,7 +142,7 @@ namespace SafeInputs.Contexts
                 while (i < n && char.IsWhiteSpace(span[i])) i++;
                 if (i >= n) break;
 
-                // attr name
+                // read attribute name
                 int nameStart = i;
                 while (i < n && !char.IsWhiteSpace(span[i]) && span[i] != '=') i++;
                 if (i <= nameStart) break;
@@ -155,22 +161,22 @@ namespace SafeInputs.Contexts
                     if (i < n && (span[i] == '"' || span[i] == '\''))
                     {
                         char quote = span[i++];
-                        int valStart = i;
+                        int vs = i;
                         while (i < n && span[i] != quote) i++;
-                        int valLen = Math.Max(0, i - valStart);
-                        attrValue = span.Slice(valStart, valLen).ToString();
+                        int lenVal = Math.Max(0, i - vs);
+                        attrValue = span.Slice(vs, lenVal).ToString();
                         if (i < n && span[i] == quote) i++; // skip closing quote
                     }
                     else
                     {
-                        int valStart = i;
+                        int vs = i;
                         while (i < n && !char.IsWhiteSpace(span[i])) i++;
-                        int valLen = Math.Max(0, i - valStart);
-                        attrValue = span.Slice(valStart, valLen).ToString();
+                        int lenVal = Math.Max(0, i - vs);
+                        attrValue = span.Slice(vs, lenVal).ToString();
                     }
                 }
 
-                // decide whether to keep attribute (whitelist-only)
+                // decide to keep: whitelist-only via policy
                 if (policy.IsAttributeAllowed(tagName, attrName))
                 {
                     if (sb.Length > 0) sb.Append(' ');
@@ -180,13 +186,13 @@ namespace SafeInputs.Contexts
                         sb.Append("='").Append(attrValue).Append('\'');
                     }
                 }
-                // else skip attribute
+                // otherwise skip attribute
             }
 
             return sb.ToString().TrimEnd();
         }
 
-        // explicit interface implementations
+        // Explicit interface implementations
         string ISanitizer<HtmlSanitizerPolicy>.Sanitize(string input, HtmlSanitizerPolicy options)
             => Sanitize(input, options);
 
