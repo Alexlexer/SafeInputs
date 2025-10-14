@@ -4,6 +4,18 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	  
+		<PackageId>SafeInputs</PackageId>
+		  <Version>1.0.0</Version>
+		  <Authors>Alex Khodyrev</Authors>
+		  <Company>SafeInputs</Company>
+		  <Description>A lightweight and extensible sanitization library for HTML, SQL, and input data in .NET.</Description>
+		  <PackageProjectUrl>https://github.com/Alexlexer/SafeInputs</PackageProjectUrl>
+		  <RepositoryUrl>https://github.com/Alexlexer/SafeInputs.git</RepositoryUrl>
+		  <RepositoryType>git</RepositoryType>
+		  <PackageTags>sanitizer;security;html;sql;xss;validation</PackageTags>
+		  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	
   </PropertyGroup>
 
   <ItemGroup>
