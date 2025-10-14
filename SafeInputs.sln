@@ -1,13 +1,20 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36518.9 d17.14
+VisualStudioVersion = 17.14.36518.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeInputs", "SafeInputs.csproj", "{4D8F58EA-6089-4012-A02D-C69250624290}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeInputsUnitTests", "..\SafeInputsUnitTests\SafeInputsUnitTests.csproj", "{193F0E2C-6088-4C50-BE56-4B25A331DF44}"
 	ProjectSection(ProjectDependencies) = postProject
 		{4D8F58EA-6089-4012-A02D-C69250624290} = {4D8F58EA-6089-4012-A02D-C69250624290}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{F4A18E4A-A11D-4E29-9695-34EDFEFAD7E9}"
+	ProjectSection(SolutionItems) = preProject
+		dotnet.yml = dotnet.yml
 	EndProjectSection
 EndProject
 Global
@@ -27,6 +34,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F4A18E4A-A11D-4E29-9695-34EDFEFAD7E9} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C0A877ED-54A0-446E-BFD4-14322C67A27A}
